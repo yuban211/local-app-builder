@@ -23,7 +23,7 @@ Cursor / Codex 这类能读写本地文件的，clone 到项目里再让它读 `
 
 ## 快速开始
 
-1. 新建空文件夹作为项目根目录（默认名 `木子的APP`）。
+1. 新建空文件夹作为项目根目录。
 2. 加载本技能（DSH：`skill` 工具加载 `local-app-builder`；其他智能体：直接把 `SKILL.md` + `references/prompts.md` 喂给它）。
 3. 从 `references/prompts.md` 的 §0 开始，按顺序发提示词：需求 → 界面设计 → PRD → 开发计划 → 分阶段开发 → Git → 走查 → 修复 → 美化 → 开源。
 
