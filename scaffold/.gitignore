@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+
+# 真实数据与备份：运行时生成，不进版本控制
+data/
+backups/
+
+# 测试产生的临时目录
+localscaffold-*/

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>本地 APP 骨架</title>
+<style>
+  :root { --ink:#2c2c2c; --dim:#777; --line:#e2e0d8; --paper:#faf9f5; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:32px 20px; background:var(--paper); color:var(--ink);
+         font:15px/1.6 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; }
+  .wrap { max-width:640px; margin:0 auto; }
+  h1 { font-size:22px; margin:0 0 4px; font-weight:600; }
+  .sub { color:var(--dim); font-size:12px; margin:0 0 24px; }
+  form { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+  input[type=text] { flex:1 1 200px; padding:9px 12px; border:1px solid var(--line);
+                     border-radius:8px; background:#fff; font:inherit; }
+  button { padding:9px 16px; border:0; border-radius:8px; background:var(--ink);
+           color:#fff; font:inherit; cursor:pointer; }
+  button:hover { opacity:.85; }
+  ul { list-style:none; padding:0; margin:0; }
+  li { display:flex; align-items:center; gap:10px; padding:11px 12px; background:#fff;
+       border:1px solid var(--line); border-radius:8px; margin-bottom:8px; }
+  li .t { flex:1; min-width:0; }
+  li .t b { font-weight:500; }
+  li .t span { display:block; color:var(--dim); font-size:12px;
+               overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  li.done .t b { text-decoration:line-through; color:var(--dim); }
+  .del { background:none; color:var(--dim); border:1px solid var(--line); padding:5px 10px; }
+  .empty { color:var(--dim); font-size:13px; padding:20px 0; text-align:center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>本地 APP 骨架</h1>
+  <p class="sub">数据存在本机的 data/app.db，重启不会丢</p>
+
+  <form id="f">
+    <input type="text" id="t" placeholder="标题（必填）" autocomplete="off">
+    <input type="text" id="n" placeholder="备注（可选）" autocomplete="off">
+    <button type="submit">添加</button>
+  </form>
+
+  <ul id="list"></ul>
+</div>
+
+<script>
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  return r.json();
+}
+
+async function load() {
+  const d = await api('/api/items');
+  const ul = document.getElementById('list');
+  ul.innerHTML = '';
+  if (!d.items.length) {
+    ul.innerHTML = '<li class="empty">还没有条目，上面添加一条试试</li>';
+    return;
+  }
+  d.items.forEach(it => {
+    const li = document.createElement('li');
+    if (it.done) li.className = 'done';
+    li.innerHTML =
+      '<input type="checkbox" class="ck" data-id="' + it.id + '"' + (it.done ? ' checked' : '') + '>' +
+      '<div class="t"><b>' + esc(it.title) + '</b><span>' + esc(it.note) + '</span></div>' +
+      '<button class="del" data-id="' + it.id + '">删除</button>';
+    ul.appendChild(li);
+  });
+}
+
+document.getElementById('f').addEventListener('submit', async e => {
+  e.preventDefault();
+  const t = document.getElementById('t').value.trim();
+  if (!t) return;
+  await api('/api/items', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({title: t, note: document.getElementById('n').value})
+  });
+  document.getElementById('t').value = '';
+  document.getElementById('n').value = '';
+  document.getElementById('t').focus();
+  load();
+});
+
+document.getElementById('list').addEventListener('click', async e => {
+  if (!e.target.classList.contains('del')) return;
+  await api('/api/items/' + e.target.dataset.id, {method: 'DELETE'});
+  load();
+});
+
+document.getElementById('list').addEventListener('change', async e => {
+  if (!e.target.classList.contains('ck')) return;
+  await api('/api/items/' + e.target.dataset.id, {
+    method: 'PATCH',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({done: e.target.checked ? 1 : 0})
+  });
+  load();
+});
+
+load();
+</script>
+</body>
+</html>
